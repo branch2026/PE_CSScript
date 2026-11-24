@@ -1,0 +1,80 @@
+<?xml version="1.0"?>
+<CSScriptData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <ScriptType>CS2</ScriptType>
+  <CompilerVersion>4</CompilerVersion>
+  <ReferenceAssemblies>
+    <string>System.dll</string>
+    <string>System.Core.dll</string>
+    <string>System.Data.dll</string>
+    <string>System.Data.DataSetExtensions.dll</string>
+    <string>System.Deployment.dll</string>
+    <string>System.Drawing.dll</string>
+    <string>System.Windows.Forms.dll</string>
+    <string>System.Xml.dll</string>
+    <string>System.Xml.Linq.dll</string>
+    <string>Microsoft.CSharp.dll</string>
+  </ReferenceAssemblies>
+  <UsingText>using System;
+using System.Windows.Forms;
+using PEPlugin;
+using PEPlugin.Pmx;
+using PEPlugin.SDX;</UsingText>
+  <FullCodeText>public sealed class CSScriptClass : PEPluginClass
+{
+    private const string Title = "批量修改材质色";
+
+    public CSScriptClass()
+    {
+        m_option = new PEPluginOption(false, true, Title);
+    }
+
+    public override void Run(IPERunArgs args)
+    {
+        try
+        {
+            int count = Apply(args.Host.Connector);
+            MessageBox.Show("已修改 " + count + " 项材质。\n扩散色 111 · 反射色 000 · 环境色 444",
+                Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, Title, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+    }
+
+    internal static int Apply(IPEConnector editor)
+    {
+        IPXPmx model = editor.Pmx.GetCurrentState();
+        if (model == null || model.Material.Count == 0)
+            throw new InvalidOperationException("请先打开含有材质的 PMX 模型。");
+
+        foreach (IPXMaterial material in model.Material)
+        {
+            material.Diffuse = new V4(1f, 1f, 1f, material.Diffuse.W);
+            material.Specular = new V3(0f, 0f, 0f);
+            material.Ambient = new V3(4f, 4f, 4f);
+        }
+
+        editor.Pmx.Update(model, PmxUpdateObject.Material, -1);
+        editor.Form.UpdateList(PEPlugin.Pmd.UpdateObject.Material);
+        editor.View.PMDView.UpdateModel();
+        editor.View.PMDView.UpdateView();
+        return model.Material.Count;
+    }
+}
+</FullCodeText>
+  <CodeText>
+  </CodeText>
+  <CodeHeader>
+  </CodeHeader>
+  <CodeFooter>
+  </CodeFooter>
+  <CodeHeader_CPugin>
+  </CodeHeader_CPugin>
+  <CodeFooter_CPugin>
+  </CodeFooter_CPugin>
+  <EnableHeader>false</EnableHeader>
+  <EnableFooter>false</EnableFooter>
+  <EnableCPluginMode>false</EnableCPluginMode>
+  <ActivePages>0</ActivePages>
+</CSScriptData>
